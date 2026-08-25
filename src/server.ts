@@ -1,4 +1,5 @@
 // RxTruth server — Express API + cron autonomy.
+import './loadEnv'; // FIRST import — populates process.env from .env
 
 import express from 'express';
 import cron from 'node-cron';

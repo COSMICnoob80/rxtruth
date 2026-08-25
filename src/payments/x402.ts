@@ -3,6 +3,7 @@
 
 import { config } from '../config';
 import { formatFetchError } from '../errors';
+import { deriveKeypairBytes } from './keypair';
 
 export interface PaymentCapture {
   txHash: string | undefined;
@@ -51,7 +52,18 @@ export async function getPaymentFetch(): Promise<typeof fetch> {
     const { base58 } = scureBase;
 
     const client = new x402Client();
-    const signer = await createKeyPairSignerFromBytes(base58.decode(solKey));
+    const raw = base58.decode(solKey);
+    let signer: unknown;
+    if (raw.length === 64) {
+      signer = await createKeyPairSignerFromBytes(raw);
+    } else if (raw.length === 32) {
+      // 32-byte secret seed — derive the full keypair via node:crypto (PKCS#8)
+      signer = await createKeyPairSignerFromBytes(deriveKeypairBytes(raw));
+    } else {
+      throw new Error(
+        `SOLANA_PRIVATE_KEY must decode to a 32-byte seed or 64-byte keypair (got ${raw.length} bytes)`
+      );
+    }
     registerExactSvmScheme(client, { signer });
 
     console.log('[x402] payment fetch ready — Solana SVM scheme registered');
