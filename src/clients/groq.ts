@@ -31,9 +31,13 @@ export async function chat(
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-          model: config.groqModel,
-          messages,
-          max_tokens: maxTokens,
+          Method: 'POST',
+          Endpoint: '/chat',
+          payload: {
+            model: config.groqModel,
+            messages,
+            max_tokens: maxTokens,
+          },
         }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
@@ -48,19 +52,18 @@ export async function chat(
         continue;
       }
 
+      // Engine wraps Miner response in { result: { choices, content, ... } }
+      // Unwrap result first, then try choices[0].message.content (OpenAI shape) or top-level content.
       const envelope = (await res.json()) as Record<string, unknown>;
       const body =
         typeof envelope.result === 'object' && envelope.result !== null
           ? (envelope.result as Record<string, unknown>)
           : envelope;
-
+      const choices = (body as { choices?: Array<{ message?: { content?: unknown } }> }).choices;
       const content =
-        typeof (body as { content?: unknown }).content === 'string'
-          ? (body as { content: string }).content
-          : typeof (envelope as { choices?: unknown[] }).choices === 'object'
-            ? ((envelope as { choices: Array<{ message?: { content?: unknown } }> }).choices?.[0]
-                ?.message?.content as string | undefined)
-            : undefined;
+        choices?.[0]?.message?.content ??
+        (body as { content?: unknown }).content ??
+        (envelope as { choices?: Array<{ message?: { content?: unknown } }> }).choices?.[0]?.message?.content;
 
       if (typeof content !== 'string' || !content.trim()) {
         throw new UpstreamError(

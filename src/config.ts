@@ -17,10 +17,10 @@ export const config = {
   runToken: process.env.RUN_TOKEN ?? '',
 
   telegraphBaseUrl: process.env.TELEGRAPH_BASE_URL ?? 'http://13.237.89.59:7044',
-  deSearchPath: process.env.DESEARCH_PATH ?? '/subnet-dispatcher/v1/101/search/mini',
-  groqPath: process.env.GROQ_PATH ?? '/subnet-dispatcher/v1/102/chat',
-  itsaiPath: process.env.ITSAI_PATH ?? '/subnet-dispatcher/v1/32',
-  groqModel: process.env.GROQ_MODEL ?? 'groq/compound-mini',
+  deSearchPath: process.env.DESEARCH_PATH ?? '/engine/v1/ask/202',
+  groqPath: process.env.GROQ_PATH ?? '/engine/v1/ask/901',
+  itsaiPath: process.env.ITSAI_PATH ?? '/engine/v1/ask/32',
+  groqModel: process.env.GROQ_MODEL ?? 'groq/llama-3.1-8b-instant',
 
   solanaPrivateKey: process.env.SOLANA_PRIVATE_KEY ?? '',
   solanaNetwork: (process.env.SOLANA_NETWORK ?? 'devnet') as 'devnet' | 'mainnet',

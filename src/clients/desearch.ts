@@ -44,7 +44,11 @@ export async function searchNews(
       const res = await fetchWithCapture(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({
+          Method: 'POST',
+          Endpoint: '/search',
+          payload: { query: query.slice(0, 200), max_results: 5 },
+        }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
 
