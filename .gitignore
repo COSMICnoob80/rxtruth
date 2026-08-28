@@ -3,3 +3,5 @@ dist/
 .env
 *.log
 data/
+# Private notes for the builder. Never published to GitHub.
+JUDGE-NOTES.md
