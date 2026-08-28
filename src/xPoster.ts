@@ -1,4 +1,6 @@
-// Optional X (Twitter) auto-posting — free tier is text-only.
+// Optional X (Twitter) auto-posting — text only on free tier.
+// The image (SVG debunk card) is always saved locally even when posting
+// is disabled, so the build-day demo can attach it manually.
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -14,22 +16,31 @@ export function saveIndexCard(idx: DailyIndex, svg: string): string {
   return path;
 }
 
+// Twitter free tier caps tweets at 280 characters. We want the
+// (1) date, (2) verdict count, (3) the actual claim text, (4) on-chain
+// proof count, (5) credit. Cut in that order, never the proof count.
 function indexTweetText(idx: DailyIndex): string {
   const top = idx.topFalseClaims[0];
-  const lines = [
-    `🧪 RxTruth Health Misinformation Index — ${idx.date}`,
-    ``,
-    `Claims verified: ${idx.totalClaims}`,
-    `FALSE: ${idx.verdictCounts.FALSE} · MISLEADING: ${idx.verdictCounts.MISLEADING} · TRUE: ${idx.verdictCounts.TRUE}`,
-  ];
-  if (top) {
-    lines.push(``);
-    lines.push(`Top false claim: "${top.text.slice(0, 140)}"`);
-    lines.push(`Verdict backed by ${top.txHashes.length} on-chain inference proofs ⛓️`);
+  const total = idx.totalClaims;
+
+  if (!top) {
+    return `RxTruth · ${idx.date}\n\n${total} viral health claim${total === 1 ? '' : 's'} verified in the last 24h. Zero false.\n\nBuilt on @Telegraphprotoc, every verdict paid in USDC via x402, audit trail on Solana devnet.`.slice(0, 280);
   }
-  lines.push(``);
-  lines.push(`Built on @Telegraphprotoc intelligence layer — every verdict paid via x402`);
-  return lines.join('\n').slice(0, 280);
+
+  const claimSnippet = top.text.length > 110 ? `${top.text.slice(0, 109)}…` : top.text;
+  const conf = (top.confidence * 100).toFixed(0);
+  return [
+    `RxTruth · ${idx.date}`,
+    ``,
+    `FALSE (${conf}%)`,
+    `"${claimSnippet}"`,
+    ``,
+    `Today: ${idx.verdictCounts.FALSE} false, ${idx.verdictCounts.MISLEADING} misleading, ${idx.verdictCounts.TRUE} true, ${idx.verdictCounts.UNVERIFIABLE} unverifiable.`,
+    ``,
+    `Built on @Telegraphprotoc · ${top.txHashes.length} on-chain proofs · x402 on Solana`,
+  ]
+    .join('\n')
+    .slice(0, 280);
 }
 
 export async function postIndexToX(idx: DailyIndex, svg: string): Promise<boolean> {
@@ -37,18 +48,13 @@ export async function postIndexToX(idx: DailyIndex, svg: string): Promise<boolea
 
   const { appKey, appSecret, accessToken, accessSecret } = config.x;
   if (!appKey || !appSecret || !accessToken || !accessSecret) {
-    console.log(`[x] credentials not set — card saved to ${cardPath} (post manually)`);
+    console.log(`[x] credentials not set, card saved to ${cardPath} (post manually)`);
     return false;
   }
 
   try {
     const { TwitterApi } = await import('twitter-api-v2');
-    const client = new TwitterApi({
-      appKey,
-      appSecret,
-      accessToken,
-      accessSecret,
-    });
+    const client = new TwitterApi({ appKey, appSecret, accessToken, accessSecret });
     await client.v2.tweet(indexTweetText(idx));
     console.log(`[x] daily index posted for ${idx.date}`);
     return true;

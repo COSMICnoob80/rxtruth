@@ -22,6 +22,11 @@ export interface VerificationResult {
   reasoning: string;
   sources: string[];
   aiSpam: AiSpamCheck | null;
+  factCheck: {
+    answer: string;
+    evidence: string[];
+    sources: string[];
+  } | null;
   txHashes: string[]; // on-chain proof — one per paid Miner call
   verifiedAt: string; // ISO timestamp
 }
@@ -42,7 +47,7 @@ export interface TopFalseClaim {
 }
 
 export interface DailyIndex {
-  date: string; // YYYY-MM-DD in Asia/Karachi
+  date: string; // YYYY-MM-DD in local timezone
   totalClaims: number;
   verdictCounts: Record<Verdict, number>;
   topFalseClaims: TopFalseClaim[];

@@ -10,30 +10,20 @@ Repo: https://github.com/COSMICnoob80/rxtruth
 > detection, and publishes a daily **Health Misinformation Index** where every verdict carries
 > on-chain proof of the inference that produced it.
 
-## Why this wins (the judge story)
-
-1. **Only doctor-built entry in a 1000+ builder pool** — the verification prompts are written
-   with real clinical judgment; nobody can copy that.
-2. **Multi-intent fusion (7 intents)** — the rules page explicitly rewards cross-domain
-   intelligence: NEWS_SEARCH + CONTENT_EXTRACTION + AI_TEXT_DETECTION + FACT_CHECK +
-   RESEARCH_SYNTHESIS + SENTIMENT_ANALYSIS + CHAT_COMPLETION.
-3. **Real Miners, zero mocking** — every verdict embeds the x402 transaction hash of the
-   inference that produced it (rule #1 compliance as a feature).
-4. **The 25% X criterion is native** — the product *is* a daily X-postable debunk card.
-
 ## Phase A — Prep window (now → Aug 31)
 
 Goal: **zero unknowns left before the build window opens.**
 
 - [x] Idea locked, scaffold built, typecheck + build green, repo pushed
-- [ ] **Fund a Solana devnet wallet** with devnet USDC; put key in `.env` (`SOLANA_PRIVATE_KEY`)
-- [ ] **Live smoke test**: `npm run run:once` — one full pipeline against the real engine
-      (`http://13.237.89.59:7044`). Fix whatever breaks (payload shapes, model names).
-- [ ] Confirm `GROQ_MODEL` name in the Telegraph Discord (#hackathon) — model names drift
+- [x] **Fund a Solana devnet wallet** with devnet SOL + USDC (Circle faucet, 20 USDC)
+- [x] **Live smoke test**: pipeline runs end-to-end against the real engine
+      (`http://13.237.89.59:7044`). Working miner IDs: Tavily 202 (news), Groq 901 (LLM), ItsAI 32 (AI-text detection)
+- [x] Confirm `GROQ_MODEL=groq/llama-3.1-8b-instant` is live (the old `groq/compound-mini` has rotated)
+- [x] Dry-run the dashboard (`npm run dev` → `GET /`) — redesigned, mobile-friendly
+- [x] First live daily Index generated with 3 FALSE / 2 MISLEADING / 3 UNVERIFIABLE verdicts
 - [ ] Join Discord, post intro, watch for engine/endpoint changes before Sep 7
 - [ ] X app keys (developer.x.com free tier) → `.env` for auto-posting
 - [ ] Update registration: GitHub repo link on the hackathon site (click Register again)
-- [ ] Dry-run the dashboard (`npm run dev` → `GET /`) and card rendering with real data
 
 ## Phase B — Build window (Aug 31 → Sep 7)
 
