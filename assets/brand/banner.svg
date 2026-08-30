@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500">
+  <!--
+    RxTruth X banner (1500x500).
+  -->
+
+  <rect width="1500" height="500" fill="#0e0f12"/>
+  <rect x="0" y="0" width="6" height="500" fill="#9ec5b3"/>
+
+  <g transform="translate(80,150)">
+    <rect x="0" y="0" width="96" height="96" rx="22" fill="none" stroke="#9ec5b3" stroke-width="3"/>
+    <path d="M 19 26 L 19 70
+             M 19 26 L 38 26
+             Q 50 26 50 38
+             Q 50 48 40 50
+             L 52 70
+             M 35 50 L 35 70"
+          fill="none" stroke="#f4f1ea" stroke-width="7"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="60" y1="38" x2="80" y2="70" stroke="#f4f1ea" stroke-width="7" stroke-linecap="round"/>
+    <line x1="80" y1="38" x2="60" y2="70" stroke="#f4f1ea" stroke-width="7" stroke-linecap="round"/>
+    <rect x="68" y="72" width="4" height="16" fill="#9ec5b3"/>
+    <rect x="62" y="78" width="16" height="4" fill="#9ec5b3"/>
+  </g>
+
+  <text x="220" y="200" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="64" font-weight="700" letter-spacing="-0.025em" fill="#f4f1ea">RxTruth</text>
+  <text x="220" y="244" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="16" font-weight="500" letter-spacing="0.32em" fill="#9ec5b3">VIRAL&#160;HEALTH&#160;CLAIMS,&#160;VERIFIED&#160;ON-CHAIN</text>
+
+  <text x="220" y="310" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="22" font-weight="400" fill="#a5a89f">Built on the Telegraph intelligence layer · paid per inference via x402</text>
+  <text x="220" y="340" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="22" font-weight="400" fill="#a5a89f">Every verdict carries an on-chain audit trail on Solana devnet</text>
+
+  <line x1="80" y1="420" x2="1420" y2="420" stroke="#2a2e38" stroke-width="1"/>
+  <text x="80" y="460" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="14" font-weight="500" letter-spacing="0.12em" fill="#6b6e66">@TELEGRAPHPROTOC&#160;·&#160;TRACK&#160;3</text>
+  <text x="1420" y="460" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="14" font-weight="500" letter-spacing="0.12em" fill="#6b6e66">github.com/COSMICnoob80/rxtruth</text>
+</svg>

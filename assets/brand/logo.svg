@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120" width="480" height="120">
+  <!--
+    RxTruth brand mark
+    Lockup: monogram + wordmark, designed at the FABLE / GLM 5.3 fidelity bar.
+    Colors (OKLCH-derived, no gradients):
+      #9ec5b3  sage accent         (medical, not crypto)
+      #f4f1ea  warm off-white ink
+      #d9695a  burnt coral         (signal, not alarm)
+      #0e0f12  near-black surface
+  -->
+
+  <!-- Monogram: "Rx" with a sage cross as the descender of the x -->
+  <g transform="translate(20,20)">
+    <!-- Outer frame: rounded square, sage stroke -->
+    <rect x="0" y="0" width="80" height="80" rx="18" fill="#0e0f12" stroke="#9ec5b3" stroke-width="2.5"/>
+
+    <!-- R letterform (custom geometric, set in 700 weight) -->
+    <path d="M 16 22
+             L 16 58
+             M 16 22
+             L 32 22
+             Q 42 22 42 32
+             Q 42 40 34 42
+             L 44 58
+             M 30 42
+             L 30 58"
+          fill="none" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- x: two diagonals + sage cross as the descender -->
+    <line x1="50" y1="32" x2="68" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+    <line x1="68" y1="32" x2="50" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Sage cross motif (medical): bottom-left of monogram -->
+    <rect x="58" y="60" width="3" height="14" fill="#9ec5b3"/>
+    <rect x="52.5" y="65.5" width="14" height="3" fill="#9ec5b3"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(120,0)">
+    <text x="0" y="58" font-family="Inter, system-ui, -apple-system, sans-serif"
+          font-size="44" font-weight="700" letter-spacing="-0.02em" fill="#f4f1ea">RxTruth</text>
+    <text x="0" y="86" font-family="Inter, system-ui, -apple-system, sans-serif"
+          font-size="12" font-weight="500" letter-spacing="0.28em" fill="#9ec5b3">MEDICAL&#160;MISINFORMATION&#160;RADAR</text>
+  </g>
+</svg>

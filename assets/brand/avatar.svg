@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <!--
+    RxTruth avatar / profile square (800x800)
+    Minimal, brand-mark focused — readable at 32px favicon size.
+  -->
+
+  <rect width="800" height="800" fill="#0e0f12"/>
+
+  <!-- Subtle radial backdrop, not a gradient band -->
+  <circle cx="400" cy="400" r="320" fill="#16181d"/>
+
+  <!-- Monogram centered, scaled 4x the logo version -->
+  <g transform="translate(240,180) scale(4)">
+    <rect x="0" y="0" width="80" height="80" rx="18" fill="none" stroke="#9ec5b3" stroke-width="2.5"/>
+
+    <path d="M 16 22 L 16 58
+             M 16 22 L 32 22
+             Q 42 22 42 32
+             Q 42 40 34 42
+             L 44 58
+             M 30 42 L 30 58"
+          fill="none" stroke="#f4f1ea" stroke-width="6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+
+    <line x1="50" y1="32" x2="68" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+    <line x1="68" y1="32" x2="50" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+
+    <rect x="58" y="60" width="3" height="14" fill="#9ec5b3"/>
+    <rect x="52.5" y="65.5" width="14" height="3" fill="#9ec5b3"/>
+  </g>
+
+  <!-- Wordmark below the monogram -->
+  <text x="400" y="640" text-anchor="middle"
+        font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="64" font-weight="700" letter-spacing="-0.02em" fill="#f4f1ea">RxTruth</text>
+  <text x="400" y="688" text-anchor="middle"
+        font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="14" font-weight="500" letter-spacing="0.32em" fill="#9ec5b3">MEDICAL&#160;MISINFORMATION&#160;RADAR</text>
+</svg>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!--
+    RxTruth Open Graph card (1200x630) for X / LinkedIn / link previews.
+    Use as a hero image wherever RxTruth needs to introduce itself.
+  -->
+
+  <rect width="1200" height="630" fill="#0e0f12"/>
+  <circle cx="1100" cy="100" r="280" fill="#16181d"/>
+
+  <!-- Brand mark, top-left -->
+  <g transform="translate(60,60)">
+    <rect x="0" y="0" width="64" height="64" rx="14" fill="none" stroke="#9ec5b3" stroke-width="2.5"/>
+    <path d="M 13 18 L 13 46
+             M 13 18 L 26 18
+             Q 34 18 34 26
+             Q 34 33 27 34
+             L 35 46
+             M 24 34 L 24 46"
+          fill="none" stroke="#f4f1ea" stroke-width="5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="26" x2="54" y2="46" stroke="#f4f1ea" stroke-width="5" stroke-linecap="round"/>
+    <line x1="54" y1="26" x2="40" y2="46" stroke="#f4f1ea" stroke-width="5" stroke-linecap="round"/>
+    <rect x="46" y="48" width="2.5" height="11" fill="#9ec5b3"/>
+    <rect x="42" y="52" width="11" height="2.5" fill="#9ec5b3"/>
+  </g>
+
+  <text x="140" y="92" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="18" font-weight="700" letter-spacing="-0.01em" fill="#f4f1ea">RxTruth</text>
+  <text x="140" y="112" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="11" font-weight="500" letter-spacing="0.24em" fill="#9ec5b3">MEDICAL&#160;MISINFORMATION&#160;RADAR</text>
+
+  <!-- Hero claim -->
+  <text x="60" y="280" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="64" font-weight="600" letter-spacing="-0.025em" fill="#f4f1ea">Viral health claims,</text>
+  <text x="60" y="356" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="64" font-weight="600" letter-spacing="-0.025em" fill="#f4f1ea">verified on-chain</text>
+  <text x="60" y="432" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="64" font-weight="600" letter-spacing="-0.025em" fill="#f4f1ea">in real time.</text>
+
+  <!-- Body -->
+  <text x="60" y="490" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="20" font-weight="400" fill="#a5a89f">Built on the Telegraph intelligence layer.</text>
+  <text x="60" y="518" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="20" font-weight="400" fill="#a5a89f">Every verdict paid in USDC. Every proof on Solana devnet.</text>
+
+  <!-- Footer mark + URL -->
+  <line x1="60" y1="558" x2="1140" y2="558" stroke="#2a2e38" stroke-width="1"/>
+  <text x="60" y="588" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="13" font-weight="500" letter-spacing="0.12em" fill="#6b6e66">@TELEGRAPHPROTOC&#160;·&#160;TELEGRAPH&#160;HACKATHON&#160;·&#160;TRACK&#160;3</text>
+  <text x="1140" y="588" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif"
+        font-size="13" font-weight="500" letter-spacing="0.12em" fill="#6b6e66">github.com/COSMICnoob80/rxtruth</text>
+</svg>
