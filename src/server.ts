@@ -5,9 +5,9 @@ import express from 'express';
 import cron from 'node-cron';
 import { createHash } from 'node:crypto';
 import { config } from './config';
-import { initStore, getClaimsSince, getIndexByDate, saveClaim } from './store';
+import { initStore, getClaimsSince, getClaimByHash, getIndexByDate, saveClaim } from './store';
 import { runPipeline } from './pipeline';
-import { buildDailyIndex, renderIndexCard } from './cards';
+import { buildDailyIndex, renderIndexCard, renderShareCard, composeShareText } from './cards';
 import { postIndexToX } from './xPoster';
 import { chatJson } from './clients/groq';
 import { detectAiText } from './clients/itsai';
@@ -167,6 +167,73 @@ app.post('/api/claims/verify', async (req, res) => {
     console.error('[server] verify failed:', (err as Error).message);
     res.status(500).json({ error: 'verification failed', detail: (err as Error).message });
   }
+});
+
+app.get('/api/claims/:id/share', (req, res) => {
+  const id = String(req.params.id ?? '').trim();
+  if (!id) {
+    res.status(400).json({ error: 'missing claim id' });
+    return;
+  }
+  const record = getClaimByHash(id);
+  if (!record) {
+    res.status(404).json({ error: 'claim not found' });
+    return;
+  }
+  const text = composeShareText(record, `${req.protocol}://${req.get('host') ?? config.telegraphBaseUrl}`);
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(`${req.protocol}://${req.get('host') ?? ''}/c/${id}`)}&text=${encodeURIComponent(text)}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  res.json({
+    svg: renderShareCard(record),
+    text,
+    waUrl,
+    telegramUrl,
+    twitterUrl,
+    claim_id: id,
+  });
+});
+
+app.get('/api/index/status', (_req, res) => {
+  const idx = getIndexByDate(pktDate());
+  res.json({
+    date: pktDate(),
+    exists: !!idx,
+    generatedAt: idx?.generatedAt ?? null,
+    totalClaims: idx?.totalClaims ?? 0,
+  });
+});
+
+app.get('/c/:id', (req, res) => {
+  // Public claim page — used for the share link fallback if WhatsApp drops
+  // the deep-link. Renders the same dashboard fragment inline.
+  const id = String(req.params.id ?? '').trim();
+  const record = id ? getClaimByHash(id) : undefined;
+  if (!record) {
+    res.status(404).type('html').send('<h1>Claim not found</h1>');
+    return;
+  }
+  const svg = renderShareCard(record);
+  const text = composeShareText(record, `${req.protocol}://${req.get('host') ?? ''}`);
+  res.type('html').send(`<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta property="og:title" content="RxTruth verification: ${record.verification?.verdict ?? 'PENDING'}">
+<meta property="og:description" content="${text.slice(0, 200).replace(/"/g, '&quot;')}">
+<title>RxTruth — ${record.claim.text.slice(0, 60)}</title>
+<style>body{background:#0e0f12;color:#f4f1ea;font-family:system-ui;margin:0;padding:24px;display:flex;flex-direction:column;align-items:center;gap:20px}
+h1{font-size:18px;max-width:680px;line-height:1.4;text-align:center;color:#f4f1ea}
+.share{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.btn{background:#9ec5b3;color:#0a1f17;border:none;padding:10px 18px;border-radius:8px;font-weight:600;text-decoration:none}
+img{max-width:100%;height:auto;border-radius:12px;background:#0e0f12}
+</style></head><body>
+<h1>${record.claim.text.replace(/</g, '&lt;')}</h1>
+<img alt="verification card" src="data:image/svg+xml;utf8,${encodeURIComponent(svg)}">
+<div class="share">
+<a class="btn" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Share on WhatsApp</a>
+<a class="btn" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Share on X</a>
+<a class="btn" href="https://t.me/share/url?url=${encodeURIComponent(`${req.protocol}://${req.get('host') ?? ''}/c/${id}`)}&text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Share on Telegram</a>
+</div>
+</body></html>`);
 });
 
 // ── Dashboard HTML ──────────────────────────────────────────────────────
@@ -368,6 +435,40 @@ const DASHBOARD_HTML = `<!doctype html>
     content: ''; width: 8px; height: 8px; border-radius: 1px; background: var(--accent); display: inline-block;
   }
   .claim-empty { color: var(--ink-faint); font-size: 13px; padding: 16px 0; }
+
+  /* Expandable on-chain proof list per claim */
+  .tx-details { display: inline-block; }
+  .tx-details summary {
+    list-style: none; cursor: pointer;
+    font-size: 11px; color: var(--ink-faint);
+    display: inline-flex; align-items: center; gap: 6px;
+    user-select: none;
+  }
+  .tx-details summary::-webkit-details-marker { display: none; }
+  .tx-details summary::before {
+    content: ''; width: 8px; height: 8px; border-radius: 1px; background: var(--accent); display: inline-block;
+  }
+  .tx-details[open] summary { color: var(--ink-dim); }
+  .tx-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+  .tx-hash {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px; color: var(--ink-dim); text-decoration: none;
+    padding: 2px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border);
+    display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  }
+  .tx-hash:hover { color: var(--accent); border-color: var(--border-hi); text-decoration: none; }
+  .tx-hash code { font-family: inherit; }
+
+  /* Share button per claim */
+  .btn-share {
+    height: 26px; padding: 0 10px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    color: var(--ink-dim); background: transparent;
+    border: 1px solid var(--border); border-radius: 6px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .btn-share:hover { color: var(--ink); border-color: var(--border-hi); background: var(--surface-2); }
+  .btn-share[disabled] { opacity: 0.5; cursor: not-allowed; }
 
   /* ─── Footer ─── */
   .footer {
@@ -586,23 +687,67 @@ const DASHBOARD_HTML = `<!doctype html>
     }
   });
 
-  // ── Run now ────────────────────────────────────────────────────────
+  // ── Run now (polls until the new index appears, then reloads) ──────
   const runBtn = document.getElementById('run-btn');
   if (runBtn) {
     runBtn.addEventListener('click', async () => {
       runBtn.disabled = true;
       const original = runBtn.textContent;
-      runBtn.textContent = 'Running…';
+      runBtn.textContent = 'Starting…';
       try {
+        // Capture the index timestamp *before* triggering, so we can detect
+        // a fresh build deterministically rather than guessing a wait time.
+        const beforeRes = await fetch('/api/index/status');
+        const before = beforeRes.ok ? await beforeRes.json() : { generatedAt: null };
         await fetch('/api/run', { method: 'POST' });
-        runBtn.textContent = 'Started, refreshing in 30s…';
-        setTimeout(() => location.reload(), 30000);
+
+        const startedAt = Date.now();
+        const pollMs = 5_000;
+        const maxMs = 120_000;
+        const tick = async () => {
+          const r = await fetch('/api/index/status');
+          if (r.ok) {
+            const j = await r.json();
+            if (j.exists && (j.generatedAt || '') > (before.generatedAt || '')) {
+              runBtn.textContent = 'Index ready — reloading';
+              setTimeout(() => location.reload(), 600);
+              return;
+            }
+          }
+          const elapsed = Math.round((Date.now() - startedAt) / 1000);
+          runBtn.textContent = 'Running · ' + elapsed + 's elapsed';
+          if (Date.now() - startedAt > maxMs) {
+            runBtn.textContent = 'Reloading anyway…';
+            setTimeout(() => location.reload(), 800);
+            return;
+          }
+          setTimeout(tick, pollMs);
+        };
+        setTimeout(tick, 3000);
       } catch (e) {
         runBtn.textContent = 'Failed — try again';
         setTimeout(() => { runBtn.disabled = false; runBtn.textContent = original; }, 4000);
       }
     });
   }
+
+  // ── Per-claim share (WhatsApp / X / Telegram) ──────────────────────
+  const share = async (claimId, btn) => {
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+    try {
+      const r = await fetch('/api/claims/' + encodeURIComponent(claimId) + '/share');
+      if (!r.ok) throw new Error('share endpoint failed: HTTP ' + r.status);
+      const j = await r.json();
+      try { await navigator.clipboard.writeText(j.text); } catch (_) {}
+      window.open(j.waUrl, '_blank', 'noopener');
+      if (btn) { btn.textContent = 'Shared'; setTimeout(() => { btn.textContent = 'Share'; btn.disabled = false; }, 2200); }
+    } catch (e) {
+      if (btn) { btn.textContent = 'Failed'; setTimeout(() => { btn.textContent = 'Share'; btn.disabled = false; }, 2200); }
+    }
+  };
+  document.querySelectorAll('[data-share]').forEach((el) => {
+    el.addEventListener('click', () => share(el.getAttribute('data-share'), el));
+  });
 
   // ── Copy card text ─────────────────────────────────────────────────
   const copyBtn = document.getElementById('copy-card-btn');
@@ -655,12 +800,22 @@ app.get('/', async (_req, res) => {
             : '—';
           const txs = c.verification?.txHashes.length ?? 0;
           const src = c.claim.sourceName ?? 'unknown';
+          const txList = c.verification?.txHashes?.length
+            ? `<details class="tx-details"><summary>${txs} on-chain proof${txs === 1 ? '' : 's'}</summary><div class="tx-list">${c
+                .verification!.txHashes
+                .map(
+                  (h) =>
+                    `<a class="tx-hash" href="https://explorer.solana.com/tx/${encodeURIComponent(h)}?cluster=devnet" target="_blank" rel="noopener"><code>${escapeHtml(h.slice(0, 24))}\u2026</code></a>`
+                )
+                .join('')}</div></details>`
+            : `<span class="tx-pill">${txs} on-chain proof${txs === 1 ? '' : 's'}</span>`;
           return `<article class="claim" data-v="${verdict}" data-text="${escapeHtml(c.claim.text)}">
             <div class="claim-text">${escapeHtml(c.claim.text)}</div>
             <div class="claim-meta">
-              <span class="pill" data-v="${verdict}">${verdict} · ${conf}</span>
+              <span class="pill" data-v="${verdict}">${verdict} \u00b7 ${conf}</span>
               <span>${escapeHtml(src)}</span>
-              <span class="tx-pill">${txs} on-chain proof${txs === 1 ? '' : 's'}</span>
+              ${txList}
+              <button class="btn-share" type="button" data-share="${c.claim.id}" aria-label="Share verdict">Share</button>
             </div>
           </article>`;
         })

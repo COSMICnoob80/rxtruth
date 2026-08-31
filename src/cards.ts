@@ -5,7 +5,7 @@
 // stays SVG (zero asset deps, embeds inline in tweets via data URL).
 
 import { config } from './config';
-import type { DailyIndex, TopFalseClaim, Verdict } from './types';
+import type { ClaimRecord, DailyIndex, TopFalseClaim, Verdict } from './types';
 import { getClaimsSince, saveIndex, getIndexByDate } from './store';
 
 const PKT_OFFSET_MIN = 300; // UTC+5
@@ -185,4 +185,111 @@ ${seg(stripX + segW * 3, C.unverified, 'UNVERIFIABLE',  idx.verdictCounts.UNVERI
   <text x="80" y="${H - 36}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">VERIFIED BY 6+ TELEGRAPH MINERS</text>
   <text x="${W - 80}" y="${H - 36}" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">PAID VIA x402 · SOLANA DEVNET</text>
 </svg>`;
+}
+
+const VERDICT_COLOR_FOR: Record<Verdict, string> = {
+  TRUE: C.true,
+  FALSE: C.false,
+  MISLEADING: C.misleading,
+  UNVERIFIABLE: C.unverified,
+};
+
+/**
+ * Per-claim share card: 1200×630 SVG sized for WhatsApp / X / Telegram
+ * previews. Same brand voice as the daily Index card but for a single
+ * debunked claim, with the on-chain audit trail visible.
+ */
+export function renderShareCard(record: ClaimRecord): string {
+  if (!record.verification) {
+    return renderIndexCard({
+      date: pktDate(),
+      totalClaims: 0,
+      verdictCounts: { TRUE: 0, FALSE: 0, MISLEADING: 0, UNVERIFIABLE: 0 },
+      topFalseClaims: [],
+      generatedAt: new Date().toISOString(),
+    });
+  }
+
+  const W = 1200;
+  const H = 630;
+  const v = record.verification;
+  const claim = record.claim;
+  const verdictColor = VERDICT_COLOR_FOR[v.verdict];
+  const conf = `${(v.confidence * 100).toFixed(0)}%`;
+
+  const claimLines = wrapText(escapeXml(claim.text), 62, 4);
+
+  const sources = v.sources
+    .filter((s) => s && s.length > 0)
+    .slice(0, 2)
+    .map((s) => escapeXml(s));
+
+  const txLines = v.txHashes
+    .slice(0, 2)
+    .map((h) => escapeXml(h.slice(0, 32) + '\u2026'))
+    .join('   \u00b7   ');
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${C.surface}"/>
+      <stop offset="100%" stop-color="#08090b"/>
+    </linearGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+
+  <text x="80" y="86" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" letter-spacing="0.22em" fill="${C.accent}">RXTRUTH</text>
+  <text x="180" y="86" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" font-weight="400" letter-spacing="0.22em" fill="${C.inkFaint}">CLAIM VERIFICATION</text>
+
+  <line x1="80" y1="106" x2="${W - 80}" y2="106" stroke="${C.border}" stroke-width="1"/>
+  <text x="80" y="148" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="20" font-weight="600" letter-spacing="-0.01em" fill="${verdictColor}">${escapeXml(v.verdict)} \u00b7 ${conf}</text>
+  <text x="${W - 80}" y="148" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" font-weight="400" letter-spacing="0.08em" fill="${C.inkFaint}">${v.txHashes.length} ON-CHAIN PROOF${v.txHashes.length === 1 ? '' : 'S'}</text>
+
+  ${claimLines
+    .map(
+      (line, j) =>
+        `<text x="80" y="${190 + j * 38}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="26" font-weight="500" fill="${C.ink}" letter-spacing="-0.005em">${line}</text>`
+    )
+    .join('\n  ')}
+
+  <line x1="80" y1="380" x2="${W - 80}" y2="380" stroke="${C.border}" stroke-width="1"/>
+  <text x="80" y="412" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">REASONING</text>
+  <text x="80" y="440" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="16" font-style="italic" fill="${C.inkDim}">${escapeXml((v.reasoning || '').slice(0, 180))}</text>
+
+  ${sources.length > 0
+    ? `<text x="80" y="482" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">SOURCES</text>
+       <text x="80" y="506" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" fill="${C.inkDim}">${sources.join(' \u00b7 ')}</text>`
+    : ''}
+
+  <text x="80" y="540" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">ON-CHAIN PROOFS</text>
+  <text x="80" y="564" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="${C.inkDim}">${txLines}</text>
+
+  <line x1="80" y1="${H - 64}" x2="${W - 80}" y2="${H - 64}" stroke="${C.border}" stroke-width="1"/>
+  <text x="80" y="${H - 36}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">RXTRUTH.MEDICAL \u00b7 VERIFY ANY CLAIM</text>
+  <text x="${W - 80}" y="${H - 36}" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">PAID VIA x402 \u00b7 SOLANA DEVNET</text>
+</svg>`;
+}
+
+/**
+ * Plain-text composition for WhatsApp / Telegram / X sharing.
+ * Returns a short, human-readable message with verdict, confidence,
+ * top tx hash, and a link back to the dashboard.
+ */
+export function composeShareText(record: ClaimRecord, baseUrl = 'https://rxtruth.app'): string {
+  if (!record.verification) return `RxTruth \u2014 claim pending verification. ${baseUrl}`;
+  const v = record.verification;
+  const conf = `${(v.confidence * 100).toFixed(0)}%`;
+  const firstHash = v.txHashes[0] ? v.txHashes[0].slice(0, 16) + '\u2026' : '\u2014';
+  const lines = [
+    `${v.verdict} (${conf}) \u2014 RxTruth medical verification`,
+    `"${record.claim.text}"`,
+    '',
+    v.reasoning,
+  ];
+  if (v.sources.length > 0) {
+    lines.push('', `Sources: ${v.sources.slice(0, 2).join(' \u00b7 ')}`);
+  }
+  lines.push('', `On-chain proof: ${firstHash} (Solana devnet, ${v.txHashes.length} total)`);
+  lines.push(`Verify any claim yourself: ${baseUrl}`);
+  return lines.join('\n').slice(0, 900);
 }
