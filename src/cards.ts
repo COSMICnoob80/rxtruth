@@ -261,8 +261,17 @@ export function renderShareCard(record: ClaimRecord): string {
        <text x="80" y="506" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" fill="${C.inkDim}">${sources.join(' \u00b7 ')}</text>`
     : ''}
 
-  <text x="80" y="540" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">ON-CHAIN PROOFS</text>
-  <text x="80" y="564" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="${C.inkDim}">${txLines}</text>
+  ${v.pubmed && v.pubmed.length > 0
+    ? `<text x="80" y="540" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.accent}">PUBMED CITATIONS</text>` +
+      v.pubmed
+        .slice(0, 2)
+        .map(
+          (c, i) =>
+            `<text x="80" y="${564 + i * 24}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="13" fill="${C.inkDim}">PMID ${c.pmid} \u00b7 ${escapeXml(String(c.year))} \u00b7 ${escapeXml(c.journal || c.title)}</text>`
+        )
+        .join('\n  ')
+    : `<text x="80" y="540" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.accent}">ON-CHAIN PROOFS</text>
+       <text x="80" y="564" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="${C.inkDim}">${txLines}</text>`}
 
   <line x1="80" y1="${H - 64}" x2="${W - 80}" y2="${H - 64}" stroke="${C.border}" stroke-width="1"/>
   <text x="80" y="${H - 36}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">RXTRUTH.MEDICAL \u00b7 VERIFY ANY CLAIM</text>
@@ -288,6 +297,12 @@ export function composeShareText(record: ClaimRecord, baseUrl = 'https://rxtruth
   ];
   if (v.sources.length > 0) {
     lines.push('', `Sources: ${v.sources.slice(0, 2).join(' \u00b7 ')}`);
+  }
+  if (v.pubmed && v.pubmed.length > 0) {
+    lines.push('', 'PubMed:');
+    v.pubmed.slice(0, 2).forEach((c) => {
+      lines.push(`  [PMID ${c.pmid}] ${c.title} \u2014 ${c.url}`);
+    });
   }
   lines.push('', `On-chain proof: ${firstHash} (Solana devnet, ${v.txHashes.length} total)`);
   lines.push(`Verify any claim yourself: ${baseUrl}`);

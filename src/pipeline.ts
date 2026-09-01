@@ -7,6 +7,7 @@ import { searchNews, type RelatedNewsItem } from './clients/desearch';
 import { chat, chatJson } from './clients/groq';
 import { detectAiText } from './clients/itsai';
 import { factCheck } from './clients/factcheck';
+import { pubmedSearch } from './clients/pubmed';
 import { withTxCapture, type PaymentCapture } from './payments/x402';
 import { saveClaim, getClaimByHash } from './store';
 
@@ -175,6 +176,8 @@ async function verifyClaim(claim: HarvestedClaim, txHashes: string[]): Promise<C
   const fc = await factCheck(claim.text, fcCapture);
   if (fcCapture.txHash) txHashes.push(fcCapture.txHash);
 
+  const pubmed = await pubmedSearch(claim.text);
+
   const fcSources = fc ? fc.sources : [];
   const mergedSources = [...sources, ...fcSources]
     .filter((s, i, arr) => arr.indexOf(s) === i)
@@ -189,6 +192,7 @@ async function verifyClaim(claim: HarvestedClaim, txHashes: string[]): Promise<C
       sources: mergedSources,
       aiSpam: aiSpam ? { isAi: aiSpam.isAi, confidence: aiSpam.confidence } : null,
       factCheck: fc ? { answer: fc.answer, evidence: fc.evidence, sources: fc.sources } : null,
+      pubmed,
       txHashes: [capture.txHash, spamCapture.txHash, fcCapture.txHash].filter((h): h is string => !!h),
       verifiedAt: new Date().toISOString(),
     },

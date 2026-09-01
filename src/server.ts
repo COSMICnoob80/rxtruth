@@ -12,6 +12,7 @@ import { postIndexToX } from './xPoster';
 import { chatJson } from './clients/groq';
 import { detectAiText } from './clients/itsai';
 import { factCheck } from './clients/factcheck';
+import { pubmedSearch } from './clients/pubmed';
 import { type PaymentCapture } from './payments/x402';
 import type { ClaimRecord, Verdict } from './types';
 
@@ -75,6 +76,13 @@ interface VerifyResponse {
   txHashes: string[];
   aiSpam: { isAi: boolean; confidence: number } | null;
   factCheck: { answer: string; sources: string[] } | null;
+  pubmed: {
+    pmid: string;
+    title: string;
+    journal: string;
+    year: string;
+    url: string;
+  }[];
   duration_ms: number;
 }
 const VERDICT_WHITELIST: readonly Verdict[] = ['TRUE', 'FALSE', 'MISLEADING', 'UNVERIFIABLE'];
@@ -119,6 +127,8 @@ app.post('/api/claims/verify', async (req, res) => {
     const fc = await factCheck(claim, fcCapture);
     if (fcCapture.txHash) txHashes.push(fcCapture.txHash);
 
+    const pubmed = await pubmedSearch(claim);
+
     const mergedSources = [...sources, ...(fc?.sources ?? [])]
       .filter((s, i, arr) => arr.indexOf(s) === i)
       .slice(0, 3);
@@ -131,6 +141,7 @@ app.post('/api/claims/verify', async (req, res) => {
       txHashes,
       aiSpam: aiSpam ? { isAi: aiSpam.isAi, confidence: aiSpam.confidence } : null,
       factCheck: fc ? { answer: fc.answer, sources: fc.sources } : null,
+      pubmed,
       duration_ms: Date.now() - startedAt,
     };
 
@@ -151,6 +162,7 @@ app.post('/api/claims/verify', async (req, res) => {
         sources: mergedSources,
         aiSpam: aiSpam ? { isAi: aiSpam.isAi, confidence: aiSpam.confidence } : null,
         factCheck: fc ? { answer: fc.answer, evidence: fc.evidence, sources: fc.sources } : null,
+        pubmed,
         txHashes,
         verifiedAt: new Date().toISOString(),
       },

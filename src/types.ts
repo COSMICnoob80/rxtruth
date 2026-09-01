@@ -27,6 +27,13 @@ export interface VerificationResult {
     evidence: string[];
     sources: string[];
   } | null;
+  pubmed: {
+    pmid: string;
+    title: string;
+    journal: string;
+    year: string;
+    url: string;
+  }[];
   txHashes: string[]; // on-chain proof — one per paid Miner call
   verifiedAt: string; // ISO timestamp
 }
