@@ -13,6 +13,7 @@ import { chatJson } from './clients/groq';
 import { detectAiText } from './clients/itsai';
 import { factCheck } from './clients/factcheck';
 import { pubmedSearch } from './clients/pubmed';
+import { seedClaimsFor, REGION_SEEDS } from './seeds';
 import { type PaymentCapture } from './payments/x402';
 import type { ClaimRecord, Verdict } from './types';
 
@@ -213,6 +214,23 @@ app.get('/api/index/status', (_req, res) => {
     exists: !!idx,
     generatedAt: idx?.generatedAt ?? null,
     totalClaims: idx?.totalClaims ?? 0,
+  });
+});
+
+app.get('/api/seeds', (_req, res) => {
+  res.json({
+    regions: REGION_SEEDS.map((r) => ({ region: r.region, regionName: r.regionName, lang: r.lang })),
+  });
+});
+
+app.get('/api/seeds/:region', (req, res) => {
+  const region = String(req.params.region ?? '').trim().toLowerCase();
+  const seed = seedClaimsFor(region);
+  res.json({
+    region: seed.region,
+    regionName: seed.regionName,
+    lang: seed.lang,
+    claims: seed.claims,
   });
 });
 
@@ -531,8 +549,17 @@ const DASHBOARD_HTML = `<!doctype html>
 
   <section class="checker" aria-label="Check a claim">
     <div class="checker-head">
-      <div class="checker-title">Check a claim</div>
-      <div class="checker-hint">Paste any health claim — verify in real time. ~$0.03 per check (3 paid Miner calls).</div>
+      <div>
+        <div class="checker-title">Check a claim</div>
+        <div class="checker-hint">Paste any health claim — verify in real time. ~$0.03 per check (3 paid Miner calls).</div>
+      </div>
+      <div class="checker-region">
+        <label for="region-select" style="font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);display:block;margin-bottom:4px">Region</label>
+        <select id="region-select" class="region-select" aria-label="Pick a region for sample claims">
+          <option value="global">Global</option>
+        </select>
+        <button class="btn btn-ghost" type="button" id="load-sample-btn" style="height:32px;padding:0 12px;margin-top:6px">Load a sample claim</button>
+      </div>
     </div>
     <form class="checker-row" id="check-form" autocomplete="off">
       <textarea
