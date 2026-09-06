@@ -447,6 +447,18 @@ const DASHBOARD_HTML = `<!doctype html>
   .claim[data-v="MISLEADING"] { border-left-color: var(--misleading); }
   .claim[data-v="UNVERIFIABLE"] { border-left-color: var(--unverified); }
   .claim-text { font-size: 15px; line-height: 1.45; margin-bottom: 8px; color: var(--ink); }
+  .claim { cursor: pointer; }
+  .claim-details { display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .claim.expanded .claim-details { display: block; }
+  .claim-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); margin: 10px 0 4px; }
+  .claim-section-label:first-child { margin-top: 0; }
+  .claim-reasoning { font-size: 13px; line-height: 1.5; color: var(--ink-dim); font-style: italic; }
+  .claim-sources { font-size: 13px; color: var(--ink-dim); }
+  .claim-pubmed { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+  .claim-pubmed li { font-size: 13px; color: var(--ink-dim); }
+  .claim-pubmed a { color: var(--accent); text-decoration: none; }
+  .claim-pubmed a:hover { text-decoration: underline; }
+  .claim-meta .btn-share { cursor: pointer; }
   .claim-meta {
     font-size: 12px; color: var(--ink-faint);
     display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center;
@@ -526,7 +538,22 @@ const DASHBOARD_HTML = `<!doctype html>
 
   <header class="top">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">Rx</span>
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 480 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RxTruth logo">
+          <g transform="translate(20,20)">
+            <rect x="0" y="0" width="80" height="80" rx="18" fill="#0e0f12" stroke="#9ec5b3" stroke-width="2.5"/>
+            <path d="M 16 22 L 16 58 M 16 22 L 32 22 Q 42 22 42 32 Q 42 40 34 42 L 44 58 M 30 42 L 30 58" fill="none" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="50" y1="32" x2="68" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+            <line x1="68" y1="32" x2="50" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+            <rect x="58" y="60" width="3" height="14" fill="#9ec5b3"/>
+            <rect x="52.5" y="65.5" width="14" height="3" fill="#9ec5b3"/>
+          </g>
+          <g transform="translate(120,0)">
+            <text x="0" y="58" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="44" font-weight="700" letter-spacing="-0.02em" fill="#f4f1ea">RxTruth</text>
+            <text x="0" y="86" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.28em" fill="#9ec5b3">MEDICAL&#160;MISINFORMATION&#160;RADAR</text>
+          </g>
+        </svg>
+      </span>
       <span class="brand-text">
         <span class="brand-name">RxTruth</span>
         <span class="brand-sub">Medical Misinformation Radar</span>
@@ -785,7 +812,19 @@ const DASHBOARD_HTML = `<!doctype html>
     }
   };
   document.querySelectorAll('[data-share]').forEach((el) => {
-    el.addEventListener('click', () => share(el.getAttribute('data-share'), el));
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      void share(el.getAttribute('data-share'), el);
+    });
+  });
+
+  // ── Claim expansion (click a card to see reasoning + PubMed + proofs) ──
+  document.querySelectorAll('.claim').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      // Ignore clicks on interactive children so links/share/details still work.
+      if ((e.target as HTMLElement).closest('a, button, details, .tx-details')) return;
+      el.classList.toggle('expanded');
+    });
   });
 
   // ── Copy card text ─────────────────────────────────────────────────
@@ -848,13 +887,30 @@ app.get('/', async (_req, res) => {
                 )
                 .join('')}</div></details>`
             : `<span class="tx-pill">${txs} on-chain proof${txs === 1 ? '' : 's'}</span>`;
+          const pubmedList = c.verification?.pubmed?.length
+            ? `<div class="claim-section-label">PUBMED CITATIONS</div>
+               <ul class="claim-pubmed">${c.verification.pubmed
+                 .slice(0, 3)
+                 .map((p) => `<li><a href="${escapeHtml(p.url)}" target="_blank" rel="noopener">PMID ${escapeHtml(p.pmid)}</a> \u00b7 ${escapeHtml(String(p.year))} \u00b7 ${escapeHtml(p.journal || p.title)}</li>`)
+                 .join('')}</ul>`
+            : '';
+          const reasoningStr = c.verification?.reasoning ? escapeHtml(c.verification.reasoning) : '';
+          const sourcesList = c.verification?.sources?.length
+            ? `<div class="claim-section-label">SOURCES</div><div class="claim-sources">${c.verification.sources.slice(0, 3).join(' \u00b7 ')}</div>`
+            : '';
           return `<article class="claim" data-v="${verdict}" data-text="${escapeHtml(c.claim.text)}">
             <div class="claim-text">${escapeHtml(c.claim.text)}</div>
             <div class="claim-meta">
               <span class="pill" data-v="${verdict}">${verdict} \u00b7 ${conf}</span>
               <span>${escapeHtml(src)}</span>
-              ${txList}
               <button class="btn-share" type="button" data-share="${c.claim.id}" aria-label="Share verdict">Share</button>
+            </div>
+            <div class="claim-details">
+              ${reasoningStr ? `<div class="claim-section-label">REASONING</div><div class="claim-reasoning">${reasoningStr}</div>` : ''}
+              ${sourcesList}
+              ${pubmedList}
+              <div class="claim-section-label">ON-CHAIN PROOFS</div>
+              ${txList}
             </div>
           </article>`;
         })
