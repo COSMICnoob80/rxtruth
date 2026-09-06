@@ -539,19 +539,13 @@ const DASHBOARD_HTML = `<!doctype html>
   <header class="top">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
-        <svg width="44" height="44" viewBox="0 0 480 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RxTruth logo">
-          <g transform="translate(20,20)">
-            <rect x="0" y="0" width="80" height="80" rx="18" fill="#0e0f12" stroke="#9ec5b3" stroke-width="2.5"/>
-            <path d="M 16 22 L 16 58 M 16 22 L 32 22 Q 42 22 42 32 Q 42 40 34 42 L 44 58 M 30 42 L 30 58" fill="none" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="50" y1="32" x2="68" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
-            <line x1="68" y1="32" x2="50" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
-            <rect x="58" y="60" width="3" height="14" fill="#9ec5b3"/>
-            <rect x="52.5" y="65.5" width="14" height="3" fill="#9ec5b3"/>
-          </g>
-          <g transform="translate(120,0)">
-            <text x="0" y="58" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="44" font-weight="700" letter-spacing="-0.02em" fill="#f4f1ea">RxTruth</text>
-            <text x="0" y="86" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.28em" fill="#9ec5b3">MEDICAL&#160;MISINFORMATION&#160;RADAR</text>
-          </g>
+        <svg width="44" height="44" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="RxTruth">
+          <rect x="0" y="0" width="80" height="80" rx="18" fill="#0e0f12" stroke="#9ec5b3" stroke-width="2.5"/>
+          <path d="M16 22 L16 58 M16 22 L32 22 Q42 22 42 32 Q42 40 34 42 L44 58 M30 42 L30 58" fill="none" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="50" y1="32" x2="68" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+          <line x1="68" y1="32" x2="50" y2="58" stroke="#f4f1ea" stroke-width="6" stroke-linecap="round"/>
+          <rect x="58" y="60" width="3" height="14" fill="#9ec5b3"/>
+          <rect x="52.5" y="65.5" width="14" height="3" fill="#9ec5b3"/>
         </svg>
       </span>
       <span class="brand-text">
@@ -700,6 +694,53 @@ const DASHBOARD_HTML = `<!doctype html>
     });
   }
 
+  // ── Region selector + sample claims ─────────────────────────────
+  const regionSelect = document.getElementById('region-select');
+  const loadSampleBtn = document.getElementById('load-sample-btn');
+  const checkInputRegion = document.getElementById('check-input');
+  let currentSampleClaims = [];
+  let currentSampleIdx = 0;
+
+  async function loadRegions() {
+    if (!regionSelect) return;
+    try {
+      const r = await fetch('/api/seeds');
+      if (!r.ok) throw new Error('seeds endpoint unavailable');
+      const j = await r.json();
+      regionSelect.innerHTML = '';
+      (j.regions || []).forEach((reg) => {
+        const opt = document.createElement('option');
+        opt.value = reg.region;
+        opt.textContent = reg.regionName;
+        regionSelect.appendChild(opt);
+      });
+    } catch (e) {
+      console.warn('region load failed:', e.message);
+    }
+  }
+
+  async function loadSampleClaim() {
+    if (!regionSelect || !checkInputRegion) return;
+    const region = regionSelect.value || 'global';
+    try {
+      const r = await fetch('/api/seeds/' + encodeURIComponent(region));
+      if (!r.ok) throw new Error('seed fetch failed');
+      const j = await r.json();
+      currentSampleClaims = j.claims || [];
+      currentSampleIdx = 0;
+      if (currentSampleClaims.length === 0) return;
+      checkInputRegion.value = currentSampleClaims[currentSampleIdx];
+      currentSampleIdx = (currentSampleIdx + 1) % currentSampleClaims.length;
+      if (loadSampleBtn) loadSampleBtn.textContent = 'Next sample';
+    } catch (e) {
+      console.warn('sample load failed:', e.message);
+    }
+  }
+
+  if (regionSelect) regionSelect.addEventListener('change', () => { currentSampleIdx = 0; if (loadSampleBtn) loadSampleBtn.textContent = 'Load a sample claim'; });
+  if (loadSampleBtn) loadSampleBtn.addEventListener('click', loadSampleClaim);
+  loadRegions();
+
   // ── Interactive claim check ───────────────────────────────────────
   const form = document.getElementById('check-form');
   const input = document.getElementById('check-input');
@@ -822,7 +863,8 @@ const DASHBOARD_HTML = `<!doctype html>
   document.querySelectorAll('.claim').forEach((el) => {
     el.addEventListener('click', (e) => {
       // Ignore clicks on interactive children so links/share/details still work.
-      if ((e.target as HTMLElement).closest('a, button, details, .tx-details')) return;
+      const t = e.target;
+      if (t && t.closest && t.closest('a, button, details, .tx-details')) return;
       el.classList.toggle('expanded');
     });
   });
