@@ -128,14 +128,14 @@ waiting for the cron.
 
 ## Who built this
 
-One doctor. No co-founders, no engineers hired.
+One doctor had the idea. The AI built it.
 
-RxTruth was vibe-coded with an AI pair programmer over about a week. The AI does the heavy lifting —
-blockchain stack, miner routing, dashboard, and pulling real PubMed citations for every verdict. The
-doctor oversees the medical side: making sure the claims being checked actually matter to public health
-and that the verdicts don't miss the obvious stuff a layperson would.
+A medical doctor (MBBS) directed what RxTruth should be and which claims matter to public health.
+The AI pair programmer built the whole stack — blockchain payments, miner routing, dashboard, and the
+PubMed citation lookups that back every verdict. Real papers, real tx hashes, real miner calls. Not
+opinion, not mockups.
 
-AI does the work. A doctor keeps it honest. That's the team.
+One person with a stethoscope pointed the thing in the right direction. AI aimed and fired.
 
 ---
 
