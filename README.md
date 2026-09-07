@@ -130,12 +130,12 @@ waiting for the cron.
 
 One doctor. No co-founders, no engineers hired.
 
-RxTruth was vibe-coded — built hand-in-hand with an AI pair programmer over about a week. The AI
-handled the blockchain stack, miner routing, and dashboard. The doctor handled the clinical judgment:
-knowing which health claims are dangerous, which are merely confused, and which are well-supported.
-Every verification prompt is written with medical domain expertise, not pattern matching.
+RxTruth was vibe-coded with an AI pair programmer over about a week. The AI does the heavy lifting —
+blockchain stack, miner routing, dashboard, and pulling real PubMed citations for every verdict. The
+doctor oversees the medical side: making sure the claims being checked actually matter to public health
+and that the verdicts don't miss the obvious stuff a layperson would.
 
-One person. Domain expertise plus AI. That's it.
+AI does the work. A doctor keeps it honest. That's the team.
 
 ---
 
