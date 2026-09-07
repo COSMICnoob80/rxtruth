@@ -128,11 +128,14 @@ waiting for the cron.
 
 ## Who built this
 
-A solo developer who is a medical doctor (MBBS). The verification prompts and the way
-claims are assessed draw on clinical training — knowing which claims are dangerous, which
-are merely confused, and which are well-supported. The rest of the stack (miner payments,
-the dashboard, the on-chain audit trail) was built by the same person, pair-programming with
-AI, in about a week.
+One doctor. No co-founders, no engineers hired.
+
+RxTruth was vibe-coded — built hand-in-hand with an AI pair programmer over about a week. The AI
+handled the blockchain stack, miner routing, and dashboard. The doctor handled the clinical judgment:
+knowing which health claims are dangerous, which are merely confused, and which are well-supported.
+Every verification prompt is written with medical domain expertise, not pattern matching.
+
+One person. Domain expertise plus AI. That's it.
 
 ---
 
