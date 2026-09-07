@@ -10,7 +10,10 @@ A small app that finds viral health claims online, asks four different AI servic
 claim is true, false, or in between, and writes a daily **Health Misinformation Index** so
 journalists, doctors, and ordinary people can see what is circulating and whether it is real.
 
-It runs on its own every six hours. You do not need to press anything to keep it going.
+Once it is running, it wakes up every six hours on its own: it searches the news, extracts
+new claims, verifies each one, and rebuilds the index. You do not need to press anything
+**while the server is running.** (If you stop the server, the schedule pauses — it is not a
+cloud host. For a 24/7 deployment you would host it on a small always-on machine.)
 
 ---
 
