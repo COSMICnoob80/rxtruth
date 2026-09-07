@@ -70,6 +70,7 @@ interface VerifyRequestBody {
   claim?: string;
 }
 interface VerifyResponse {
+  claimId: string;
   verdict: Verdict;
   confidence: number;
   reasoning: string;
@@ -134,7 +135,10 @@ app.post('/api/claims/verify', async (req, res) => {
       .filter((s, i, arr) => arr.indexOf(s) === i)
       .slice(0, 3);
 
+    const id = createHash('sha256').update(claim.toLowerCase().replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 16);
+
     const response: VerifyResponse = {
+      claimId: id,
       verdict,
       confidence,
       reasoning,
@@ -145,8 +149,6 @@ app.post('/api/claims/verify', async (req, res) => {
       pubmed,
       duration_ms: Date.now() - startedAt,
     };
-
-    const id = createHash('sha256').update(claim.toLowerCase().replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 16);
     const record: ClaimRecord = {
       claim: {
         id,
@@ -772,21 +774,33 @@ const DASHBOARD_HTML = `<!doctype html>
 
       const conf = Math.round((j.confidence || 0) * 100);
       const txs = (j.txHashes || []).length;
-      const aiTag = j.aiSpam ? (j.aiSpam.isAi ? '· likely AI-written' : '· human-written') : '';
-      const fc = j.factCheck ? j.factCheck.answer : '';
+      const aiTag = j.aiSpam ? (j.aiSpam.isAi ? ' · likely AI-written' : ' · human-written') : '';
+      const txList = (j.txHashes || []).length
+        ? '<details class="tx-details"><summary>' + txs + ' on-chain proof' + (txs === 1 ? '' : 's') + '</summary><div class="tx-list">' + (j.txHashes || []).map((h) => '<a class="tx-hash" href="https://explorer.solana.com/tx/' + encodeURIComponent(h) + '?cluster=devnet" target="_blank" rel="noopener"><code>' + esc(h.slice(0, 24)) + '…</code></a>').join('') + '</div></details>'
+        : '<span class="tx-pill">' + txs + ' on-chain proof' + (txs === 1 ? '' : 's') + '</span>';
+      const pubmedList = (j.pubmed && j.pubmed.length)
+        ? '<div class="claim-section-label">PUBMED CITATIONS</div><ul class="claim-pubmed">' + j.pubmed.slice(0, 3).map((p) => '<li><a href="' + esc(p.url) + '" target="_blank" rel="noopener">PMID ' + esc(p.pmid) + '</a> · ' + esc(String(p.year)) + ' · ' + esc(p.journal || p.title) + '</li>').join('') + '</ul>'
+        : '';
+      const reasoningStr = j.reasoning ? esc(j.reasoning) : '';
+      const sourcesList = (j.sources && j.sources.length)
+        ? '<div class="claim-section-label">SOURCES</div><div class="claim-sources">' + j.sources.slice(0, 3).join(' · ') + '</div>'
+        : '';
       result.innerHTML =
-        '<div class="claim" data-v="' + esc(j.verdict) + '" style="margin-top:8px">' +
-          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
-            '<span class="pill" data-v="' + esc(j.verdict) + '">' + esc(j.verdict) + ' · ' + conf + '%</span>' +
-            '<span class="tx-pill">' + txs + ' on-chain proof' + (txs === 1 ? '' : 's') + '</span>' +
-            '<span style="font-size:11px;color:var(--ink-faint)">' + elapsed + 's · ' + esc(aiTag) + '</span>' +
-          '</div>' +
+        '<article class="claim" data-v="' + esc(j.verdict) + '" style="margin-top:8px">' +
           '<div class="claim-text">' + esc(text) + '</div>' +
           '<div class="claim-meta">' +
-            '<span style="font-style:italic">' + esc(j.reasoning || '') + '</span>' +
+            '<span class="pill" data-v="' + esc(j.verdict) + '">' + esc(j.verdict) + ' · ' + conf + '%</span>' +
+            '<span style="font-size:11px;color:var(--ink-faint)">' + elapsed + 's' + esc(aiTag) + '</span>' +
+            (j.claimId ? '<button class="btn-share" type="button" data-share="' + esc(j.claimId) + '" aria-label="Share verdict">Share</button>' : '') +
           '</div>' +
-          (fc ? '<div class="claim-meta"><span class="tx-pill">FACT_CHECK: ' + esc(fc) + '</span></div>' : '') +
-        '</div>';
+          '<div class="claim-details">' +
+            (reasoningStr ? '<div class="claim-section-label">REASONING</div><div class="claim-reasoning">' + reasoningStr + '</div>' : '') +
+            sourcesList +
+            pubmedList +
+            '<div class="claim-section-label">ON-CHAIN PROOFS</div>' +
+            txList +
+          '</div>' +
+        '</article>';
     } catch (err) {
       result.innerHTML = '<div class="claim-empty" style="color:var(--false)">Verification failed: ' + esc(err.message) + '</div>';
     } finally {
