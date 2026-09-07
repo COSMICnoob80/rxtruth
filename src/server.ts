@@ -259,6 +259,7 @@ img{max-width:100%;height:auto;border-radius:12px;background:#0e0f12}
 <h1>${record.claim.text.replace(/</g, '&lt;')}</h1>
 <img alt="verification card" src="data:image/svg+xml;utf8,${encodeURIComponent(svg)}">
 <div class="share">
+<a class="btn" href="data:image/svg+xml;utf8,${encodeURIComponent(svg)}" download="rxtruth-${id}.svg">Download SVG</a>
 <a class="btn" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Share on WhatsApp</a>
 <a class="btn" href="https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Share on X</a>
 <a class="btn" href="https://t.me/share/url?url=${encodeURIComponent(`${req.protocol}://${req.get('host') ?? ''}/c/${id}`)}&text=${encodeURIComponent(text)}" target="_blank" rel="noopener">Share on Telegram</a>
@@ -559,7 +560,7 @@ const DASHBOARD_HTML = `<!doctype html>
         <span>Telegraph engine</span>
         <span>Solana devnet</span>
       </div>
-      <button class="btn btn-secondary" id="run-btn" type="button">Run now</button>
+      <button class="btn btn-secondary" id="run-btn" type="button" data-run-token="{{RUN_TOKEN}}">Run now</button>
     </div>
   </header>
 
@@ -806,7 +807,8 @@ const DASHBOARD_HTML = `<!doctype html>
         // a fresh build deterministically rather than guessing a wait time.
         const beforeRes = await fetch('/api/index/status');
         const before = beforeRes.ok ? await beforeRes.json() : { generatedAt: null };
-        await fetch('/api/run', { method: 'POST' });
+        const runToken = runBtn.getAttribute('data-run-token') || '';
+        await fetch('/api/run', { method: 'POST', headers: { 'x-run-token': runToken } });
 
         const startedAt = Date.now();
         const pollMs = 5_000;
@@ -838,15 +840,18 @@ const DASHBOARD_HTML = `<!doctype html>
     });
   }
 
-  // ── Per-claim share (WhatsApp / X / Telegram) ──────────────────────
+  // ── Per-claim share ────────────────────────────────────────────────
+  // Opens the public claim page (/c/:id) in a new tab, where the card is
+  // rendered as a visible image with share buttons. Copies the share text
+  // to the clipboard so the user can paste it anywhere.
   const share = async (claimId, btn) => {
-    if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
     try {
       const r = await fetch('/api/claims/' + encodeURIComponent(claimId) + '/share');
       if (!r.ok) throw new Error('share endpoint failed: HTTP ' + r.status);
       const j = await r.json();
       try { await navigator.clipboard.writeText(j.text); } catch (_) {}
-      window.open(j.waUrl, '_blank', 'noopener');
+      window.open('/c/' + encodeURIComponent(claimId), '_blank', 'noopener');
       if (btn) { btn.textContent = 'Shared'; setTimeout(() => { btn.textContent = 'Share'; btn.disabled = false; }, 2200); }
     } catch (e) {
       if (btn) { btn.textContent = 'Failed'; setTimeout(() => { btn.textContent = 'Share'; btn.disabled = false; }, 2200); }
@@ -965,7 +970,8 @@ app.get('/', async (_req, res) => {
     .replace('{{UNVERIFIABLE}}', String(stats.UNVERIFIABLE))
     .replace('{{TOTAL}}', String(total))
     .replace('{{CARD_OR_EMPTY}}', cardSection)
-    .replace('{{CLAIMS_OR_EMPTY}}', claimsSection);
+    .replace('{{CLAIMS_OR_EMPTY}}', claimsSection)
+    .replace('{{RUN_TOKEN}}', escapeHtml(config.runToken));
 
   res.type('html').send(html);
 });

@@ -143,30 +143,31 @@ waiting for the cron.
 
 ---
 
-## Who built this and why?
+## What does a debunk card look like?
 
-A solo builder who happens to be a doctor. The "AI pair programmer" angle is real and visible
-in the commit history. The medical authority angle (knowing which health claims are dangerous,
-which are merely confused, and which are well-supported) is the thing that nobody else in the
-hackathon pool can copy.
+Every verified claim gets a shareable card with the verdict, reasoning, real PubMed
+citations, and on-chain transaction proofs. Here are two live examples generated from
+actual data in this repo:
 
-The app is a working answer to a simple question: **can a one-person team build something
-that fact-checks health claims automatically, with every step auditable on a public
-blockchain?** Yes, in under a week, for the cost of a few dollars in test-network money.
+**FALSE · 99% — "Berries are more effective than vaccines"**
+![Berries debunk card](artifacts/share-berries.png)
+
+**FALSE · 95% — "If you use a certain product, then you will look 20 years younger"**
+![Anti-aging debunk card](artifacts/share-antiaging.png)
+
+The PubMed IDs resolve on [pubmed.ncbi.nlm.nih.gov](https://pubmed.ncbi.nlm.nih.gov) and the
+tx hashes resolve on [Solana Explorer](https://explorer.solana.com) (devnet). These are not
+mockups — they are generated live from the database.
 
 ---
 
-## For the judges
+## How does the dashboard look?
 
-- The agent is real, not a mock. Every claim in the database has Solana transaction hashes
-  proving the AI services were actually called and paid.
-- The dashboard at `GET /` is the live product, not a screenshot. You can paste any claim
-  and watch three AI services respond in real time.
-- The miner routing was discovered empirically by probing the Telegraph engine's live
-  catalog (`/engine/v1/subnets` and `/engine/v1/intents`). The mapping is in
-  [JUDGE-NOTES.md](./JUDGE-NOTES.md) (private, but the public code shows the same paths).
-- The doctor's perspective is real. The verification prompts are written with clinical
-  judgment, not pattern matching.
+![Full dashboard screenshot](artifacts/dashboard-full.png)
+
+The dashboard is the live product at `GET /`. Paste any health claim, pick a region for
+sample claims, and watch three AI services respond in real time. Click **Run now** to
+trigger the full autonomous harvest cycle.
 
 ---
 
@@ -180,26 +181,6 @@ blockchain?** Yes, in under a week, for the cost of a few dollars in test-networ
 | `GET /api/index/today` | Today's Index + the SVG card |
 | `POST /api/claims/verify` | Verify a single claim on demand (body: `{claim: "..."}`) |
 | `POST /api/run` | Trigger the full harvest cycle (header: `x-run-token`) |
-
----
-
-## Visuals & artifacts
-
-Production-ready images you can post on X / LinkedIn / Discord or attach to a
-submission. All of them are in the `artifacts/` folder of this repo.
-
-| File | What it shows |
-|---|---|
-| `artifacts/share-antiaging.png` | A per-claim debunk card — "look 20 years younger" ruled **FALSE · 95%**, with the reasoning, two real PubMed citations, and three on-chain tx proofs. This is the strongest single image. |
-| `artifacts/share-berries.png` | Another debunk card — "Berries are more effective than vaccines" ruled **FALSE · 99%**, with three PubMed citations (NEJM) and three on-chain proofs. |
-| `artifacts/dashboard-full.png` | Full dashboard screenshot (hi-dpi) — the live app with the claim-check box, region selector, verdict tally, and the verified-claims feed. |
-| `artifacts/index-card.png` | The daily Health Misinformation Index card (SVG rendered to PNG). |
-| `artifacts/hero-stacked.png` | Dashboard + best debunk card composited vertically — ready to post as one image. |
-| `artifacts/hero-composite.png` | Same, side by side — for wide-format posts. |
-
-Every verdict card is generated live from real data: the PubMed IDs resolve on
-[pubmed.ncbi.nlm.nih.gov](https://pubmed.ncbi.nlm.nih.gov) and the tx hashes resolve on
-[Solana Explorer](https://explorer.solana.com) (devnet). They are not mockups.
 
 ---
 
