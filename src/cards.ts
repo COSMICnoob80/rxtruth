@@ -211,13 +211,13 @@ export function renderShareCard(record: ClaimRecord): string {
   }
 
   const W = 1200;
-  const H = 630;
   const v = record.verification;
   const claim = record.claim;
   const verdictColor = VERDICT_COLOR_FOR[v.verdict];
   const conf = `${(v.confidence * 100).toFixed(0)}%`;
 
   const claimLines = wrapText(escapeXml(claim.text), 62, 4);
+  const claimH = claimLines.length * 38;
 
   const sources = v.sources
     .filter((s) => s && s.length > 0)
@@ -226,8 +226,19 @@ export function renderShareCard(record: ClaimRecord): string {
 
   const txLines = v.txHashes
     .slice(0, 2)
-    .map((h) => escapeXml(h.slice(0, 32) + '\u2026'))
-    .join('   \u00b7   ');
+    .map((h) => escapeXml(h.slice(0, 32) + '…'))
+    .join('   ·   ');
+
+  // Walk the Y cursor so nothing overlaps regardless of which sections are present.
+  const reasoningY = 190 + claimH + 50;
+  const sourcesY = reasoningY + 50;
+  const citationsY = sources.length > 0 ? sourcesY + 50 : reasoningY + 50;
+  const pubmedEntries = v.pubmed && v.pubmed.length > 0 ? v.pubmed.slice(0, 2) : [];
+  const citationsBottom =
+    citationsY + 24 + pubmedEntries.length * 24 + (pubmedEntries.length > 0 ? 0 : 24);
+  const footerLineY = citationsBottom + 30;
+  const footerTextY = footerLineY + 28;
+  const H = footerTextY + 34;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
   <defs>
@@ -242,7 +253,7 @@ export function renderShareCard(record: ClaimRecord): string {
   <text x="180" y="86" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" font-weight="400" letter-spacing="0.22em" fill="${C.inkFaint}">CLAIM VERIFICATION</text>
 
   <line x1="80" y1="106" x2="${W - 80}" y2="106" stroke="${C.border}" stroke-width="1"/>
-  <text x="80" y="148" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="20" font-weight="600" letter-spacing="-0.01em" fill="${verdictColor}">${escapeXml(v.verdict)} \u00b7 ${conf}</text>
+  <text x="80" y="148" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="20" font-weight="600" letter-spacing="-0.01em" fill="${verdictColor}">${escapeXml(v.verdict)} · ${conf}</text>
   <text x="${W - 80}" y="148" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" font-weight="400" letter-spacing="0.08em" fill="${C.inkFaint}">${v.txHashes.length} ON-CHAIN PROOF${v.txHashes.length === 1 ? '' : 'S'}</text>
 
   ${claimLines
@@ -252,30 +263,29 @@ export function renderShareCard(record: ClaimRecord): string {
     )
     .join('\n  ')}
 
-  <line x1="80" y1="380" x2="${W - 80}" y2="380" stroke="${C.border}" stroke-width="1"/>
-  <text x="80" y="412" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">REASONING</text>
-  <text x="80" y="440" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="16" font-style="italic" fill="${C.inkDim}">${escapeXml((v.reasoning || '').slice(0, 180))}</text>
+  <line x1="80" y1="${reasoningY - 22}" x2="${W - 80}" y2="${reasoningY - 22}" stroke="${C.border}" stroke-width="1"/>
+  <text x="80" y="${reasoningY}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">REASONING</text>
+  <text x="80" y="${reasoningY + 28}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="16" font-style="italic" fill="${C.inkDim}">${escapeXml((v.reasoning || '').slice(0, 180))}</text>
 
   ${sources.length > 0
-    ? `<text x="80" y="482" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">SOURCES</text>
-       <text x="80" y="506" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" fill="${C.inkDim}">${sources.join(' \u00b7 ')}</text>`
+    ? `<text x="80" y="${sourcesY}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.inkFaint}">SOURCES</text>
+       <text x="80" y="${sourcesY + 24}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="14" fill="${C.inkDim}">${sources.join(' · ')}</text>`
     : ''}
 
-  ${v.pubmed && v.pubmed.length > 0
-    ? `<text x="80" y="540" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.accent}">PUBMED CITATIONS</text>` +
-      v.pubmed
-        .slice(0, 2)
+  ${pubmedEntries.length > 0
+    ? `<text x="80" y="${citationsY}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.accent}">PUBMED CITATIONS</text>` +
+      pubmedEntries
         .map(
           (c, i) =>
-            `<text x="80" y="${564 + i * 24}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="13" fill="${C.inkDim}">PMID ${c.pmid} \u00b7 ${escapeXml(String(c.year))} \u00b7 ${escapeXml(c.journal || c.title)}</text>`
+            `<text x="80" y="${citationsY + 24 + i * 24}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="13" fill="${C.inkDim}">PMID ${c.pmid} · ${escapeXml(String(c.year))} · ${escapeXml(c.journal || c.title)}</text>`
         )
         .join('\n  ')
-    : `<text x="80" y="540" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.accent}">ON-CHAIN PROOFS</text>
-       <text x="80" y="564" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="${C.inkDim}">${txLines}</text>`}
+    : `<text x="80" y="${citationsY}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="0.18em" fill="${C.accent}">ON-CHAIN PROOFS</text>
+       <text x="80" y="${citationsY + 24}" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="${C.inkDim}">${txLines}</text>`}
 
-  <line x1="80" y1="${H - 64}" x2="${W - 80}" y2="${H - 64}" stroke="${C.border}" stroke-width="1"/>
-  <text x="80" y="${H - 36}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">RXTRUTH.MEDICAL \u00b7 VERIFY ANY CLAIM</text>
-  <text x="${W - 80}" y="${H - 36}" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">PAID VIA x402 \u00b7 SOLANA DEVNET</text>
+  <line x1="80" y1="${footerLineY}" x2="${W - 80}" y2="${footerLineY}" stroke="${C.border}" stroke-width="1"/>
+  <text x="80" y="${footerTextY}" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">RXTRUTH.MEDICAL · VERIFY ANY CLAIM</text>
+  <text x="${W - 80}" y="${footerTextY}" text-anchor="end" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" letter-spacing="0.12em" fill="${C.inkFaint}">PAID VIA x402 · SOLANA DEVNET</text>
 </svg>`;
 }
 

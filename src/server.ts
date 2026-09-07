@@ -908,7 +908,7 @@ app.get('/', async (_req, res) => {
 
   const cardSection = idx
     ? `<div class="card-wrap">${renderIndexCard(idx)}</div>`
-    : `<div style="padding:48px 20px;color:var(--ink-faint);text-align:center"><div style="color:var(--ink-dim);font-size:15px;margin-bottom:6px">No index yet for today</div><div>Use "Run now" to trigger a verification cycle.</div></div>`;
+    : `<div style="padding:48px 20px;color:var(--ink-faint);text-align:center;background:var(--surface);border:1px dashed var(--border);border-radius:10px;min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"><div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint)">No index yet for today</div><div style="font-size:14px;color:var(--ink-dim)">Click <strong style="color:var(--accent)">Run now</strong> to harvest and verify the latest claims.</div></div>`;
 
   const claimsSection = claims.length === 0
     ? `<div class="claim-empty">No claims verified yet. Use the "Check a claim" box above, or click "Run now".</div>`

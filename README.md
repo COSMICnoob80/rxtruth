@@ -183,6 +183,26 @@ blockchain?** Yes, in under a week, for the cost of a few dollars in test-networ
 
 ---
 
+## Visuals & artifacts
+
+Production-ready images you can post on X / LinkedIn / Discord or attach to a
+submission. All of them are in the `artifacts/` folder of this repo.
+
+| File | What it shows |
+|---|---|
+| `artifacts/share-antiaging.png` | A per-claim debunk card — "look 20 years younger" ruled **FALSE · 95%**, with the reasoning, two real PubMed citations, and three on-chain tx proofs. This is the strongest single image. |
+| `artifacts/share-berries.png` | Another debunk card — "Berries are more effective than vaccines" ruled **FALSE · 99%**, with three PubMed citations (NEJM) and three on-chain proofs. |
+| `artifacts/dashboard-full.png` | Full dashboard screenshot (hi-dpi) — the live app with the claim-check box, region selector, verdict tally, and the verified-claims feed. |
+| `artifacts/index-card.png` | The daily Health Misinformation Index card (SVG rendered to PNG). |
+| `artifacts/hero-stacked.png` | Dashboard + best debunk card composited vertically — ready to post as one image. |
+| `artifacts/hero-composite.png` | Same, side by side — for wide-format posts. |
+
+Every verdict card is generated live from real data: the PubMed IDs resolve on
+[pubmed.ncbi.nlm.nih.gov](https://pubmed.ncbi.nlm.nih.gov) and the tx hashes resolve on
+[Solana Explorer](https://explorer.solana.com) (devnet). They are not mockups.
+
+---
+
 ## License
 
 MIT
