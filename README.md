@@ -126,6 +126,16 @@ waiting for the cron.
 
 ---
 
+## Who built this
+
+A solo developer who is a medical doctor (MBBS). The verification prompts and the way
+claims are assessed draw on clinical training — knowing which claims are dangerous, which
+are merely confused, and which are well-supported. The rest of the stack (miner payments,
+the dashboard, the on-chain audit trail) was built by the same person, pair-programming with
+AI, in about a week.
+
+---
+
 ## What's in the repo?
 
 | File or folder | What it does |
