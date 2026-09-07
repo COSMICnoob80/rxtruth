@@ -812,7 +812,8 @@ const DASHBOARD_HTML = `<!doctype html>
 
         const startedAt = Date.now();
         const pollMs = 5_000;
-        const maxMs = 120_000;
+        const maxMs = 300_000; // 5 min — pipeline can take a while on first run
+        let retried = false;
         const tick = async () => {
           const r = await fetch('/api/index/status');
           if (r.ok) {
@@ -825,8 +826,11 @@ const DASHBOARD_HTML = `<!doctype html>
           }
           const elapsed = Math.round((Date.now() - startedAt) / 1000);
           runBtn.textContent = 'Running · ' + elapsed + 's elapsed';
-          if (Date.now() - startedAt > maxMs) {
-            runBtn.textContent = 'Reloading anyway…';
+          if (Date.now() - startedAt > maxMs && !retried) {
+            // Pipeline is taking long; reload once to surface whatever exists,
+            // but keep the button usable so the user can Run now again.
+            retried = true;
+            runBtn.textContent = 'Taking long — reloading to check…';
             setTimeout(() => location.reload(), 800);
             return;
           }
